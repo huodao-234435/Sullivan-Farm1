@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes, viewport-fit=cover">
+  <title>沙利文农场 · 锚与镜 | 恐怖文字游戏</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #0a0c09;
+      color: #d4d0c8;
+      font-family: 'Georgia', 'Times New Roman', '宋体', '仿宋', serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      background-image: radial-gradient(ellipse at center, #1a2416 0%, #050805 95%);
+      background-attachment: fixed;
+    }
+    #game-container {
+      max-width: 750px;
+      width: 100%;
+      background: rgba(14, 18, 12, 0.92);
+      border: 1px solid #3e4d2c;
+      border-radius: 20px;
+      padding: 24px 28px;
+      box-shadow: 0 0 80px rgba(0,0,0,0.9), inset 0 0 40px rgba(70,90,30,0.2);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    #audio-control {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f140b;
+      border: 1px solid #3a4a2e;
+      padding: 8px 16px;
+      border-radius: 25px;
+      font-size: 0.85rem;
+      color: #c9b87e;
+    }
+    #audio-toggle {
+      background: #1a2416;
+      border: 1px solid #5a4a32;
+      color: #e2d7b4;
+      padding: 6px 18px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    #audio-toggle:hover {
+      background: #25381a;
+      border-color: #7a934e;
+      box-shadow: 0 0 12px rgba(120,140,50,0.5);
+    }
+    #status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0c100a;
+      border-bottom: 1px solid #3a4a2e;
+      padding: 12px 20px;
+      border-radius: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .san-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #c9b87e;
+      font-weight: bold;
+    }
+    .san-value {
+      font-size: 1.6rem;
+      font-family: 'Courier New', monospace;
+      color: #e0c87c;
+      text-shadow: 0 0 12px #7a5c1e;
+      min-width: 50px;
+      text-align: center;
+      transition: color 0.2s;
+    }
+    .location-tag {
+      color: #7e8c6b;
+      font-style: italic;
+      background: rgba(0,0,0,0.3);
+      padding: 4px 14px;
+      border-radius: 14px;
+    }
+    #narrative-box {
+      background: #0f130c;
+      border: 1px solid #2a3422;
+      border-radius: 14px;
+      padding: 22px;
+      line-height: 1.9;
+      font-size: 1.05rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 450px;
+      overflow-y: auto;
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+      color: #ddd8c8;
+    }
+    #narrative-box::-webkit-scrollbar {
+      width: 5px;
+    }
+    #narrative-box::-webkit-scrollbar-track {
+      background: #0c0f08;
+    }
+    #narrative-box::-webkit-scrollbar-thumb {
+      background: #3a4a2e;
+      border-radius: 6px;
+    }
+    #choices-box {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .choice-btn {
+      background: #1a2416;
+      border: 1px solid #3e5432;
+      color: #e2d7b4;
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 1rem;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.25s;
+      font-family: inherit;
+      letter-spacing: 0.4px;
+      line-height: 1.5;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      background: linear-gradient(145deg, #1b2616 0%, #111a0e 100%);
+    }
+    .choice-btn:hover:not(:disabled) {
+      background: #25381a;
+      border-color: #7a934e;
+      color: #fff3c9;
+      box-shadow: 0 0 20px rgba(120,140,50,0.6);
+      transform: translateY(-2px);
+    }
+    .choice-btn:disabled {
+      opacity: 0.4;
+      pointer-events: none;
+      filter: grayscale(0.7);
+    }
+    #reset-area {
+      display: flex;
+      justify-content: flex-end;
+    }
+    #reset-btn {
+      background: none;
+      border: 1px solid #4a3a2e;
+      color: #8b7862;
+      padding: 8px 18px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      background: rgba(18,15,10,0.8);
+    }
+    #reset-btn:hover {
+      border-color: #8b6a4a;
+      color: #cfb892;
+      box-shadow: 0 0 12px #4a3020;
+    }
+    @media (max-width: 500px) {
+      #game-container { padding: 16px; }
+      #narrative-box { max-height: 380px; }
+    }
+  </style>
+</head>
+<body>
+<div id="game-container">
+  <div id="audio-control">
+    <span>🎻 BGM</span>
+    <button id="audio-toggle">🔇 已静音</button>
+  </div>
+  <div id="status-bar">
+    <div class="san-display">🧠 理智 <span class="san-value" id="sanValue">95</span>/100</div>
+    <div class="location-tag" id="locationTag">📍 梅特隆公寓</div>
+  </div>
+  <div id="narrative-box">正在唤醒阴影……</div>
+  <div id="choices-box"></div>
+  <div id="reset-area"><button id="reset-btn">⟳ 重新开始</button></div>
+</div>
+
+<script>
+  (function() {
+    // ---------- 游戏状态 ----------
+    const GameState = {
+      san: 95,
+      maxSan: 100,
+      location: "梅特隆公寓",
+      flags: {},
+      inventory: [],
+      coreMemory: null,
+      endingReached: false
+    };
+
+    let currentNode = 'intro_cold_war';
+    const sanEl = document.getElementById('sanValue');
+    const locEl = document.getElementById('locationTag');
+    const narrEl = document.getElementById('narrative-box');
+    const choiceEl = document.getElementById('choices-box');
+    const resetBtn = document.getElementById('reset-btn');
+    const audioToggle = document.getElementById('audio-toggle');
+
+    // ---------- 音乐系统 (哥特恐怖小提琴) ----------
+    let bgmAudio = null;
+    let audioEnabled = false;
+    
+    // 选自 Pixabay 的哥特式恐怖氛围音乐 (小提琴/暗黑)
+    const GOTHIC_HORROR_MUSIC = "https://cdn.pixabay.com/audio/2022/10/25/audio_8d56e1a0f0.mp3";
+    const BACKUP_MUSIC = "https://cdn.pixabay.com/audio/2022/05/17/audio_18008f8a13.mp3";
+
+    function initAudio() {
+      if (bgmAudio) return;
+      try {
+        bgmAudio = new Audio(GOTHIC_HORROR_MUSIC);
+        bgmAudio.loop = true;
+        bgmAudio.volume = 0.4;
+        bgmAudio.preload = 'auto';
+        bgmAudio.onerror = function() {
+          console.warn("主BGM加载失败，尝试备用");
+          bgmAudio.src = BACKUP_MUSIC;
+          bgmAudio.load();
+        };
+      } catch (e) {}
+    }
+
+    function enableAudio() {
+      if (!bgmAudio) initAudio();
+      if (!bgmAudio) return;
+      if (!audioEnabled) {
+        bgmAudio.play().then(() => {
+          audioEnabled = true;
+          audioToggle.textContent = "🔊 播放中";
+          audioToggle.style.color = "#cfbc93";
+        }).catch(() => {
+          audioEnabled = false;
+          audioToggle.textContent = "🔇 点击开启";
+        });
+      }
+    }
+
+    function disableAudio() {
+      if (bgmAudio) {
+        bgmAudio.pause();
+        audioEnabled = false;
+        audioToggle.textContent = "🔇 已静音";
+        audioToggle.style.color = "#8b7a5c";
+      }
+    }
+
+    audioToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (audioEnabled) {
+        disableAudio();
+      } else {
+        enableAudio();
+      }
+    });
+
+    // 全局首次点击自动播放（符合浏览器策略）
+    document.addEventListener('click', function unlockAudio() {
+      if (!bgmAudio) initAudio();
+      if (bgmAudio && bgmAudio.paused && !audioEnabled) {
+        enableAudio();
+      }
+    }, { once: false });
+
+    // ---------- UI 更新 ----------
+    function updateUI() {
+      if (GameState.san <= 0) {
+        sanEl.textContent = '0';
+        sanEl.style.color = '#8b3a3a';
+      } else if (GameState.san <= 25) {
+        sanEl.textContent = GameState.san;
+        sanEl.style.color = '#c45a3c';
+      } else if (GameState.san <= 50) {
+        sanEl.textContent = GameState.san;
+        sanEl.style.color = '#d4a43c';
+      } else {
+        sanEl.textContent = GameState.san;
+        sanEl.style.color = '#e0c87c';
+      }
+      locEl.textContent = '📍 ' + GameState.location;
+    }
+
+    function setNarrative(text) {
+      narrEl.innerHTML = text;
+      narrEl.scrollTop = 0;
+    }
+
+    function clearChoices() { choiceEl.innerHTML = ''; }
+
+    function addChoice(text, nextNode, condition) {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      if (condition && !condition()) {
+        btn.disabled = true;
+        btn.textContent = '【🔒 ' + text + '】';
+      } else {
+        btn.textContent = text;
+        btn.addEventListener('click', () => {
+          if (GameState.san <= 0 && nextNode !== 'death_san_zero') {
+            navigateTo('death_san_zero');
+          } else {
+            navigateTo(nextNode);
+          }
+        });
+      }
+      choiceEl.appendChild(btn);
+    }
+
+    function changeSan(amount) {
+      GameState.san = Math.min(GameState.maxSan, Math.max(0, GameState.san + amount));
+      updateUI();
+      if (GameState.san <= 0) {
+        navigateTo('death_san_zero');
+        return false;
+      }
+      return true;
+    }
+
+    function navigateTo(nodeId) {
+      currentNode = nodeId;
+      clearChoices();
+      if (storyNodes[nodeId]) {
+        storyNodes[nodeId]();
+      } else {
+        setNarrative('剧情开发中……');
+        addChoice('返回开头', 'intro_cold_war');
+      }
+      updateUI();
+    }
+
+    function resetGame() {
+      GameState.san = 95;
+      GameState.location = "梅特隆公寓";
+      GameState.flags = {};
+      GameState.inventory = [];
+      GameState.coreMemory = null;
+      GameState.endingReached = false;
+      navigateTo('intro_cold_war');
+    }
+
+    resetBtn.addEventListener('click', () => {
+      if (confirm('重新开始？当前进度会丢失。')) resetGame();
+    });
+
+    // ---------- 剧情数据库 (保留原有分支，已增强死亡风险) ----------
+    const storyNodes = {
+
+      // 开场：梅特隆公寓
+      intro_cold_war: function() {
+        GameState.location = "梅特隆公寓";
+        setNarrative(
+          '梅特隆的冬天总是来得格外早。\n\n' +
+          '你和卢克已经四天没有正经说过话了。起因小到可笑——关于周末到底是看比赛还是宅家的分歧，最后演变成摔门、沉默，以及背对背睡在床的两侧。\n\n' +
+          '今天下午，一封盖着堪萨斯州邮戳的信被塞进了门缝。卢克捡起来，盯着寄件人“埃利奥特·沙利文”看了很久。那是他几乎没见过的远房舅公。\n\n' +
+          '“杰米。”他终于开口，嗓音干涩，“舅公邀请我们去他的农场住几天。在堪萨斯，很偏僻。”\n\n' +
+          '他把信递给你，手指不经意间碰了碰你的手背。信里夹着一张老照片：一片灰绿色的玉米地，后面是低矮的木屋。\n\n' +
+          '你抬头看他。卢克的耳根有点红：“我们……不能一直这样。我想我们需要换个地方，好好说说话。”'
+        );
+        addChoice('A. 答应他，第二天出发去堪萨斯', 'travel_to_farm');
+        addChoice('B. 沉默片刻，但还是点头同意', 'travel_to_farm');
+      },
+
+      travel_to_farm: function() {
+        GameState.location = "堪萨斯 · 沙利文农场";
+        setNarrative(
+          '你们开了一整天的车。卢克几乎没说话，但每隔一小时问一下需不需吃点东西。\n\n' +
+          '抵达农场时已经是黄昏。木屋比照片里更旧，但收拾得很干净。舅公并不在——邻居说他“出门几天，让你们自便”。\n\n' +
+          '你们把行李搬进主屋卧室。冷战的气氛依然像一层薄冰，但至少他主动把靠窗的那侧床留给了你。\n\n' +
+          '第一夜很平静。直到凌晨三点。地下室的门开始发出抓挠声。'
+        );
+        changeSan(-5);
+        addChoice('继续……', 'start');
+      },
+
+      start: function() {
+        GameState.location = "沙利文农场主屋卧室";
+        setNarrative(
+          '地下室的门在凌晨三点又一次发出抓挠声时，你终于从断断续续的噩梦里挣扎着醒了过来。\n\n' +
+          '卢克·沙利文，你的男友，此刻如同被困在童年衣柜里的男孩，眉头紧皱，呼吸短促。\n\n' +
+          '你伸手想去推他，指尖刚碰到他汗湿的肩膀，他猛地弹坐起来，差点撞上你的额头。\n\n' +
+          '"……Fuck。"他的声音哑得像砂纸，"你也醒了？"\n\n' +
+          '你没有回答，因为地下室那个方向又传来了声音——湿漉漉的、沉重的东西在撞击门板。接着谷仓传来一声动物分娩时的痛苦嘶鸣，音调尖锐而又粘稠。'
+        );
+        addChoice('A. 带上手电筒一起去谷仓', 'go_barn_together');
+        addChoice('B. 让卢克留在屋里，你一个人去', 'go_barn_alone');
+        addChoice('C. 不要出去，等天亮', 'wait_till_dawn');
+      },
+
+      go_barn_together: function() {
+        GameState.location = "谷仓";
+        setNarrative('你们穿上外套，拿起手电筒。卢克抄起了铁管。\n\n谷仓的门半开着，里面黑黢黢的。走近后能闻到一股甜腻的羊水味。你们看到了那头母牛，旁边是一个正在试图站起来的东西——一头畸形牛犊，额心凸起，四肢关节反向，蹄子裂成多瓣。');
+        changeSan(-10);
+        GameState.flags.saw_calf = true;
+        addChoice('继续……', 'after_barn_together');
+      },
+      after_barn_together: function() {
+        setNarrative('卢克攥着铁管挡在你前面：“这他妈是一头牛吗？”\n\n你们退出谷仓，阳光照在身上却感觉不到暖意。');
+        addChoice('A. 先去湖边看看', 'visit_lake');
+        addChoice('B. 回屋撬开地下室', 'explore_basement');
+      },
+      go_barn_alone: function() {
+        GameState.location = "谷仓";
+        setNarrative('卢克坚决反对，但你挣开了他的手。\n\n推开谷仓门，那股甜腥味几乎把你呛退。手电筒的光扫过那个畸形牛犊——它转头，额心凸起下方的皮肤在抽动。恐惧被无限放大。');
+        changeSan(-14);
+        GameState.flags.saw_calf = true;
+        addChoice('返回木屋，和卢克汇合', 'back_from_alone');
+      },
+      back_from_alone: function() {
+        setNarrative('你回到木屋，卢克等在门口，赤裸着上身。他看到你的表情，把你拉进房间，关上门，把额头抵在你头顶上，久久没说话。');
+        addChoice('A. 提议去湖边', 'visit_lake');
+        addChoice('B. 提议撬开地下室', 'explore_basement');
+      },
+      wait_till_dawn: function() {
+        GameState.location = "沙利文农场主屋卧室";
+        setNarrative('你说："别出去。"\n\n卢克想反驳，但你握住了他的手腕。他紧绷的肌肉放松下来，将被子裹在你身上。\n\n天亮后，你被煎蛋的焦香唤醒。卢克递来咖啡，“杰米，我觉得我们有必要去地下室看看”');
+        changeSan(3);
+        GameState.flags.waited_dawn = true;
+        addChoice('A. 先去谷仓和湖边', 'check_barn_lake_dawn');
+        addChoice('B. 直接撬开地下室', 'explore_basement');
+      },
+      check_barn_lake_dawn: function() {
+        setNarrative('你们先去谷仓。母牛已经出气多进气少，旁边躺着长相恶心的畸形牛犊。\n接着去湖边，发现了某种白色颗粒状卵和湖对岸的巨大脚印。');
+        changeSan(-10);
+        GameState.flags.saw_calf = true;
+        GameState.flags.visited_lake = true;
+        addChoice('A. 回屋撬开地下室', 'explore_basement');
+        addChoice('B. 先修玉米地边的围栏', 'repair_fence');
+      },
+      visit_lake: function() {
+        GameState.location = "湖边";
+        setNarrative('湖面泛着墨绿色，码头上漂浮着白色颗粒状的卵。卢克一把拽住你伸向水面的手：“别碰。”\n\n水面下有什么东西在靠近，湖对岸泥地上有着巨大脚印。');
+        changeSan(-8);
+        GameState.flags.visited_lake = true;
+        addChoice('A. 回屋撬开地下室', 'explore_basement');
+        addChoice('B. 先修围栏，追踪脚印', 'repair_fence');
+      },
+      repair_fence: function() {
+        GameState.location = "玉米地边缘";
+        setNarrative('围栏被从外撞坏，倒伏的玉米杆指向农场内部。你看到一排和湖边类似的巨大脚印。');
+        changeSan(-7);
+        addChoice('A. 继续往玉米地深处追踪', 'cornfield_track');
+        addChoice('B. 先回屋，撬开地下室', 'explore_basement');
+      },
+      cornfield_track: function() {
+        setNarrative('你们深入玉米地，发现了一个浅坑，湿泥散发着湖底淤泥的腥臭味，坑边有被腐蚀的骨头，下面压着更多白色卵状物，正在轻微蠕动。');
+        changeSan(-12);
+        GameState.flags.found_eggs = true;
+        addChoice('立刻退回农场', 'explore_basement');
+      },
+      explore_basement: function() {
+        GameState.location = "地下室";
+        setNarrative('卢克用撬棍崩开挂锁，门缝涌出腐败甜味。楼梯墙壁上满是刻痕。\n\n地下室中央画着大圈套小圈的图案，墙上有一幅犄角环绕的巨画。你们找到了舅公的笔记本和一面遮着布的铜镜，布上绣着"不要掀开"。\n\n笔记里写着："湖里的东西在上一个满月又出来了。""它想诞生。""不要信任镜子。"');
+        changeSan(-15);
+        GameState.flags.basement_opened = true;
+        if (!GameState.inventory.includes('舅公的笔记本')) GameState.inventory.push('舅公的笔记本');
+        if (!GameState.inventory.includes('遮着布的铜镜')) GameState.inventory.push('遮着布的铜镜');
+        setNarrative(narrEl.innerHTML + '\n\n突然，温度骤降，墙内传来指甲刮擦声，天花板渗出水滴。卢克把你推上楼梯：“杰米，快走！”');
+        changeSan(-7);
+        addChoice('A. 再冒险搜一下地下室', 'search_basement_deeper');
+        addChoice('B. 上去处理谷仓里的牛犊', 'handle_calf');
+        addChoice('C. 先研究笔记本和镜子', 'study_artifacts');
+      },
+      search_basement_deeper: function() {
+        setNarrative('你强忍恐惧翻找，在角落发现一张老照片：玉米地边缘有个轮廓被圈出，背面写着"它在找一扇门"。');
+        changeSan(-12);
+        GameState.flags.searched_deeper = true;
+        addChoice('上去', 'handle_calf');
+      },
+      handle_calf: function() {
+        GameState.location = "谷仓后面";
+        setNarrative('你们挖坑埋了牛犊和母牛。卢克一个人扛下了所有重活，汗水浸透了他的工装背心。\n\n他撑着铁锹说：“来这儿的主意是我出的。本想找个地方好好谈谈，结果带你来了这么个鬼地方。”');
+        changeSan(-10);
+        GameState.flags.barn_cleared = true;
+        addChoice('A. 告诉他这不是他的错', 'emotional_moment');
+        addChoice('B. 说我们需要先搞清楚真相', 'plan_town_visit');
+      },
+      emotional_moment: function() {
+        setNarrative('你握住他的手：“我们是一起来的，杰米哥的字典里可没有临阵脱逃。”\n\n他愣了一下，然后用力回握。某种"连结"在你们之间清晰地存在着。');
+        changeSan(2);
+        GameState.flags.emotional_moment = true;
+        addChoice('继续，计划去镇上', 'plan_town_visit');
+      },
+      study_artifacts: function() {
+        setNarrative('你们细读笔记本：图案代表“通道”“容器”“收割”。那面镜子正静静躺在桌角。\n\n卢克说："明天去镇上吧。我们需要更多信息。"');
+        GameState.flags.studied_artifacts = true;
+        addChoice('计划去镇上', 'plan_town_visit');
+      },
+      plan_town_visit: function() {
+        GameState.location = "木屋客厅";
+        setNarrative('你们列出已知信息：湖中实体、变异牲畜、地下室的图案、镜子的警告。\n\n卢克在笔记本上写下：小镇。\n“但不管选哪个，我们都在一起。”');
+        addChoice('A. 先去档案室查旧记录', 'go_archives');
+        addChoice('B. 先接触镇上的人', 'go_town_people');
+      },
+      go_town_people: function() {
+        GameState.location = "杂货店";
+        setNarrative('玛莎，杂货店老板娘，一眼认出你们来自沙利文农场。她锁上门，告诉你们农场前任主人克劳福德的失踪，以及老沙利文每年冬天消失两个月。\n\n她送给你们粗盐、一把铜钥匙。“镇子最东方住着克莱尔，她或许可以帮助你们。”');
+        GameState.flags.met_masha = true;
+        if (!GameState.inventory.includes('粗盐')) GameState.inventory.push('粗盐');
+        if (!GameState.inventory.includes('铜钥匙')) GameState.inventory.push('铜钥匙');
+        changeSan(2);
+        addChoice('A. 先去档案室', 'go_archives');
+        addChoice('B. 直接去找克莱尔', 'visit_claire');
+      },
+      go_archives: function() {
+        GameState.location = "小镇档案室";
+        setNarrative('管理员翻出1957年石板档案。教授的信记录：石板材质未知，实验室里的动物正在尖叫，研究生在走廊看到肢体末端如镜子的鬼魅。\n\n最后的手写字："它不需要石板，只需要被看见。我正在被找到。"');
+        changeSan(-12);
+        GameState.flags.read_archives = true;
+        addChoice('A. 带走石板', 'take_slab');
+        addChoice('B. 不带走', 'leave_slab');
+      },
+      take_slab: function() {
+        setNarrative('你用黑布裹好石板放进背包。');
+        GameState.inventory.push('石板（黑布包裹）');
+        addChoice('去找克莱尔', 'visit_claire');
+      },
+      leave_slab: function() {
+        setNarrative('你把石板放回档案盒深处。');
+        addChoice('去找克莱尔', 'visit_claire');
+      },
+      visit_claire: function() {
+        GameState.location = "克莱尔的家";
+        setNarrative('克莱尔女士，八十多岁，瞳孔浅灰如冰。她的客厅没有镜子，挂满了风景照。\n\n她说：“那是饥饿。它想要存在于我们的世界。你们的舅公不是在躲它，而是在跟它做交易：每年给它提供新的‘门’，换取自己不被吞噬。他把你们叫来，只是因为‘门’快用完了。”');
+        GameState.flags.met_claire = true;
+        changeSan(-8);
+        addChoice('继续……', 'memory_choice');
+      },
+      memory_choice: function() {
+        setNarrative('克莱尔问："你们有没有共同面对过死亡？或者一种超越感情的承诺？"');
+        addChoice('A. 确认关系的那晚，天台吹风', 'memory_illness');
+        addChoice('B. 卢克出差前，机场送别', 'memory_breakup');
+        addChoice('C. 一起回香港，偷吃宵夜', 'memory_ring');
+      },
+      memory_illness: function() {
+        GameState.coreMemory = { type:'illness', title:'确认关系的那晚' };
+        setNarrative('你想到卢克涨红的脸，和那个颤抖但坚定的吻。');
+        addChoice('继续……', 'claire_final');
+      },
+      memory_breakup: function() {
+        GameState.coreMemory = { type:'near_breakup', title:'出差送别' };
+        setNarrative('你说了那晚的事。卢克的手从背后伸过来，握住你的手指。克莱尔说：“这也是你们的连结。”');
+        addChoice('继续……', 'claire_final');
+      },
+      memory_ring: function() {
+        GameState.coreMemory = { type:'ring', title:'回香港' };
+        setNarrative('你们偷吃了奶奶准备的年货，第二天被罚干了一整天的苦力活。');
+        addChoice('继续……', 'claire_final');
+      },
+      claire_final: function() {
+        setNarrative('克莱尔拿出半截碳条：“用它在湖边画下那个图案，就能把东西引出来。再用那面遮布的铜镜——让它看到自己的倒影，蛇衔住自己的尾巴，通道就会关闭。”');
+        if (!GameState.inventory.includes('碳条')) GameState.inventory.push('碳条');
+        changeSan(3);
+        addChoice('返回农场准备最终战斗', 'return_farm_final');
+      },
+      return_farm_final: function() {
+        GameState.location = "沙利文农场主屋";
+        setNarrative('你们回到农场，门窗上有刮痕和碎贝壳。卢克在门口撒了盐线。那一夜你们手指勾在一起，是来农场后第一个完整的觉。');
+        changeSan(5);
+        addChoice('第二天一早，前往湖边', 'lake_battle_prep');
+      },
+      lake_battle_prep: function() {
+        GameState.location = "湖边";
+        setNarrative('你们收集了所有反光物，布置成了反射阵列。你用碳条在地上画出那个犄角图案，线条暗光流动。湖面忽然平滑如镜，你们感到被巨物注视的毛骨悚然感。');
+        changeSan(-10);
+        addChoice('A. 正面迎击，与卢克并肩', 'battle_direct');
+        addChoice('B. 你持镜埋伏，卢克诱敌', 'battle_luke_decoy');
+        addChoice('C. 你诱敌，卢克持镜', 'battle_you_decoy');
+      },
+      battle_direct: function() {
+        setNarrative('你们并肩站在图案旁。邪神从扭曲空气中现身，身材高瘦，四肢细长反关节，头如镜面般平滑。它释放暗色丝线摧毁了几乎所有反光面。但你们紧握彼此的手，连结形成屏障。最后，你举起铜镜，卢克扶住你的手臂，让它在镜中看到自己。它折叠、尖啸着，被拖回湖底。');
+        changeSan(-22);
+        addChoice('战斗结束……', 'ending_anchor_and_mirror');
+      },
+      battle_luke_decoy: function() {
+        setNarrative('卢克站在图案前，用铁管敲击地面挑衅。邪神注意力被他吸引，丝线将他击倒。但他始终挡在你前面。你从橡树后冲出，掀开铜镜。它看到自己，开始自我折叠，最终被拖回湖底。卢克却倒在原地，暂时失去了意识。');
+        changeSan(-18);
+        addChoice('战斗结束……', 'ending_anchor_and_mirror');
+      },
+      battle_you_decoy: function() {
+        setNarrative('你站在图案旁，用自己的倒影引诱邪神。它朝你逼近，精神冲击让你几乎崩溃——但卢克从后方用铜镜照向它。在最后一刻，你听到他的吼声，看到镜子里它的脸融化。你冲过去一起持镜，直到它被彻底封印。你的鼻腔一阵温热，鲜血砸在泥地里。');
+        changeSan(-28);
+        addChoice('战斗结束……', 'ending_anchor_and_mirror');
+      },
+      ending_anchor_and_mirror: function() {
+        GameState.flags.ending_reached = true;
+        GameState.location = "湖边";
+        setNarrative(
+          '湖面恢复平静，晨光划破天际。铜镜掉落在泥地里。\n\n' +
+          '你们赢了。邪神被囚禁回湖底，通道关闭。但你知道这一切并没有结束。\n\n' +
+          '你们浑身泥泞，狼狈不堪，却感到一阵大难不死后的疲惫。\n\n' +
+          '你回头望向湖面。饥饿已然沉睡，但你们已经有了彼此作为锚点。\n\n' +
+          '<b>结局达成：锚与镜</b>\n' +
+          'San值剩余：' + GameState.san + '/100\n' +
+          '解锁成就：首次封印完成 · 关键记忆唤醒 · 镜子· 新的清晨'
+        );
+        addChoice('🔄 重新开始', 'intro_cold_war');
+      },
+
+      // ---------- 死亡结局 (理智归零) ----------
+      death_san_zero: function() {
+        GameState.san = 0;
+        GameState.location = "虚无";
+        setNarrative(
+          '你的精神彻底崩溃了。\n\n' +
+          '那些从湖底传来的呢喃变成了你唯一能听到的声音。镜子里的倒影开始对你窃窃私语，你分不清哪一个才是真正的自己。\n\n' +
+          '你倒在地上，瞳孔中映出不属于自己的脸。卢克的呼喊声越来越远，最终被潮湿的寂静吞没。\n\n' +
+          '<b>理智归零 · 你成为了新的"门"。</b>\n\n' +
+          '饥饿找到了它的通道。而你们之间的连结，终究没能成为锚。'
+        );
+        GameState.flags.ending_reached = true;
+        addChoice('🔄 重新开始', 'intro_cold_war');
+      }
+    };
+
+    // 启动游戏
+    navigateTo('intro_cold_war');
+  })();
+</script>
+</body>
+</html>
